@@ -4,11 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.exastax.poiimporter.conf.AppConfig;
 import org.springframework.core.env.Environment;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,20 +25,16 @@ public class FileManager implements IFileManager {
     //Constructor
     public FileManager(Environment env) throws Exception {
         AppConfig.properties = new PropertiesModel ( env );
-        brPoi = new BufferedReader ( new InputStreamReader ( new FileInputStream ( AppConfig.properties.getFilePathPoi ( ) ),
-                AppConfig.properties.getCharSet ( ) ) );
+        brPoi = getFileContent(AppConfig.properties.getFilePathPoi());
         getCityTownLists ( );
     }
 
     // Get city and town list from file file and convert to hashmap
     private void getCityTownLists() throws Exception {
         try {
-            brCity = new BufferedReader ( new InputStreamReader ( new FileInputStream ( AppConfig.properties.getFilePathCity ( ) ),
-                    AppConfig.properties.getCharSet ( ) ) );
-            brTown = new BufferedReader ( new InputStreamReader ( new FileInputStream ( AppConfig.properties.getFilePathTown ( ) ),
-                    AppConfig.properties.getCharSet ( ) ) );
-            getMapFromCSVString ( );
-
+            brCity = getFileContent(AppConfig.properties.getFilePathCity ());
+            brTown = getFileContent(AppConfig.properties.getFilePathTown ());
+            getMapFromCSVString ();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace ( );
         }
@@ -134,4 +126,17 @@ public class FileManager implements IFileManager {
         line = line.replace ( "\"", "" );
         return columns ( line, seperator, columnCount );
     }
+
+    private BufferedReader getFileContent(String filePath) throws UnsupportedEncodingException {
+        try {
+            return new BufferedReader ( new InputStreamReader ( new FileInputStream ( filePath ),
+                    AppConfig.properties.getCharSet ( ) ) );
+        } catch (FileNotFoundException e) {
+            log.error (String.format ( "Invalid file path. File not found. File name: %s. \n" +
+                    "Set correct poi,city or town file paths in /src/main/resources/default.properties file.",filePath));
+            System.exit(0);
+        }
+        return null;
+    }
+
 }
